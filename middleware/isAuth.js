@@ -18,7 +18,7 @@ const isAuth = (req, res, next) => {
         authHeader = sessionId;
     }
     if (!authHeader) {
-        res.status(401).json({
+        return res.status(401).json({
             message: 'Unauthenticated'
         });
     }
@@ -29,7 +29,7 @@ const isAuth = (req, res, next) => {
         req.email = decodedToken?.email;
         next();
     }catch (e) {
-        res.status(401).json({
+        return res.status(401).json({
             message: 'Unauthenticated'
         });
     }

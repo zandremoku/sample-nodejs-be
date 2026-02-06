@@ -17,7 +17,7 @@ const recommend = (type, amount, duration) => {
     };
 };
 
-const getRecommendationHandler = ({ age, dependents, riskTolerance }) => {
+const getRecommendationHandler = ({ age, riskTolerance }) => {
     if (age < 40) {
         if (riskTolerance === "high") {
             return recommend("Term Life", 500_000, 20);
@@ -75,22 +75,23 @@ const getRecommendation = async (req, res) =>{
 }
 
 const createRecommendation =  async (req, res) =>{
-    const {age, income, risk, userId} = req.body;
+    const {age, income, risk} = req.body;
+    const userId = req.userId;//very important. please see middleware/isAuth.js where this is set.
     try {
         if(!age || !parseInt(age) || parseInt(age) < 0 || parseInt(age) > 100){
-            return res.data(400).json({
+            return res.status(400).json({
                 message: 'age is required'
             });
         }
         if(!income || !parseInt(income) || parseInt(income) < 0){
-            return res.data(400).json({
+            return res.status(400).json({
                 message: 'income is required'
             });
         }
         const riskList  = ['low', 'medium', 'high'];
         const riskLC = risk.toLowerCase().trim();
         if(!risk || !riskList.includes(riskLC)){
-            return res.data(400).json({
+            return res.status(400).json({
                 message: 'risk is required'
             });
         }
@@ -98,7 +99,7 @@ const createRecommendation =  async (req, res) =>{
         console.log('userId', userId)
         const user = await User.findByPk(userId);
         if(!user){
-            res.status(401).json({
+            return res.status(401).json({
                 message: 'Unauthorized!'
             });
         }
@@ -107,6 +108,7 @@ const createRecommendation =  async (req, res) =>{
             age, income, risk: riskLC, userId
         };
         const recommendation = await Recommendation.create(payload);
+        console.log(recommendation);
         const message = getRecommendationHandler({
             age,
             riskTolerance: risk,
@@ -135,12 +137,12 @@ const updateRecommendation = async (req, res) =>{
             });
         }
         if(!age || !parseInt(age) || !parseInt(age) < 0 || !parseInt(age) > 100){
-            return res.data(400).json({
+            return res.status(400).json({
                 message: 'age is required'
             });
         }
         if(!income || !parseInt(income) || parseInt(income) < 0){
-            return res.data(400).json({
+            return res.status(400).json({
                 message: 'income is required'
             });
         }
@@ -148,7 +150,7 @@ const updateRecommendation = async (req, res) =>{
         const riskList  = ['low', 'medium', 'high'];
         const riskLC = risk.toLowerCase().trim();
         if(!risk || !riskList.includes(riskLC)){
-            return res.data(400).json({
+            return res.status(400).json({
                 message: 'risk is required'
             });
         }
@@ -156,7 +158,7 @@ const updateRecommendation = async (req, res) =>{
         const userId = req.params.userId;
         const [user, recommendation] = await Promise.all([User.findByPk(userId),Recommendation.findByPk(id)]);
         if(!user){
-            res.status(401).json({
+            return res.status(401).json({
                 message: 'Unauthorized!'
             });
         }
