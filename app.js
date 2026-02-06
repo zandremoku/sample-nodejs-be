@@ -26,15 +26,10 @@ async function migrate(){
 
 migrate();
 
-// Middleware to parse JSON bodies
-// app.use(express.json());
-
 // Example route to test JSON parsing
-
-// app.post('/example', express.json(), (req, res) => {
-//     const receivedData = req.body;
-//     res.json({ message: 'Data received!', data: receivedData });
-// });
+app.get('/', (req, res) => {
+    res.json({ message: 'Server is running!' });
+});
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`);
