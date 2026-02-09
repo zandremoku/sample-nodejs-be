@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Option 1: Passing a connection URI
-const sequelize = new Sequelize(`${process.env.DATABASE_URL}`, {
+const sequelize = new Sequelize(`${process.env.DATABASE_URL}`, (process.env.NODE_ENV === 'production') ? {
   dialect: 'postgres',
   dialectOptions: {
     ssl: {
@@ -14,7 +14,7 @@ const sequelize = new Sequelize(`${process.env.DATABASE_URL}`, {
     }
   },
   logging: false // Optional: disable SQL logs in production
-});
+} : {dialect: 'postgres'});
 
 try {
   await sequelize.authenticate();
