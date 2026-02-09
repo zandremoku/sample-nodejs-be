@@ -31,6 +31,10 @@ const Recommendation = sequelize.define(
             type: DataTypes.ENUM('low', 'medium', 'high'),
             allowNull: false,
             defaultValue: 'low'
+        },
+        result: {
+            type: DataTypes.STRING,
+            allowNull: true,
         }
     },
     {

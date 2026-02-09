@@ -13,7 +13,7 @@ const recommend = (type, amount, duration) => {
         plan: `${type} - $${amount} for ${
             duration === "lifetime" ? "life" : duration + " years"
         }`,
-        reason: `Based on your age, risk tolerance, and family status, we recommend a ${type} plan.`,
+        reason: `Based on your age, income and risk tolerance we recommend a ${type} plan.`,
     };
 };
 
@@ -39,7 +39,14 @@ const getRecommendationHandler = ({ age, riskTolerance }) => {
 
 const getRecommendations = async (req, res, next) =>{
     try{
-        const recommendations = await Recommendation.findAll();
+        const userId = req.userId;//very important. please see middleware/isAuth.js where this is set.
+        const recommendations = await Recommendation.findAll({
+            where: {
+                userId
+            }
+        });
+
+        console.log(recommendations);
 
         res.status(200).json({
             data: recommendations
@@ -104,20 +111,20 @@ const createRecommendation =  async (req, res) =>{
             });
         }
 
-        const payload = {
-            age, income, risk: riskLC, userId
-        };
-        const recommendation = await Recommendation.create(payload);
-        console.log(recommendation);
         const message = getRecommendationHandler({
             age,
             riskTolerance: risk,
         });
+        const payload = {
+            age, income, risk: riskLC, userId, result: message.plan
+        };
+        const recommendation = await Recommendation.create(payload);
+        console.log(recommendation);
 
         res.status(200).json({
             data: {
                 ...recommendation.dataValues,
-                message: message.plan,
+                message: message.reason,
             }
         });
 
@@ -168,8 +175,13 @@ const updateRecommendation = async (req, res) =>{
             })
         }
 
+        const message = getRecommendationHandler({
+            age,
+            riskTolerance: riskLC,
+        });
+
         const payload = {
-            age, income, risk: riskLC, userId
+            age, income, risk: riskLC, userId, result: message.plan
         };
 
         recommendation.update(payload);

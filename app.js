@@ -28,9 +28,9 @@ migrate();
 
 // Example route to test JSON parsing
 app.get('/', (req, res) => {
-    res.json({ message: 'Server is running!' });
+    res.json({ message: 'Backend is running!' });
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening at http://localhost:${port}`);
+  console.log(`Sample app listening at http://localhost:${port}`);
 });
