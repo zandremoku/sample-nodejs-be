@@ -1,12 +1,14 @@
 
 import {Sequelize} from 'sequelize';
 import dotenv from 'dotenv';
+import pg from 'pg';
 
 dotenv.config();
 
 // Option 1: Passing a connection URI
 const sequelize = new Sequelize(`${process.env.DATABASE_URL}`, (process.env.NODE_ENV === 'production') ? {
   dialect: 'postgres',
+  dialectModule: pg,
   dialectOptions: {
     ssl: {
       require: true,
