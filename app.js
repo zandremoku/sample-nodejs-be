@@ -4,12 +4,9 @@ import sequelize from './helpers/dbConnection.js';
 import userRouter from './fetchApi/routes/userRoute.js';
 import recommendationRoute from "./fetchApi/routes/recommendationRoute.js";
 import cors from 'cors';
-import dotenv from "dotenv";
 
 const app = express();
 const port = 3000;
-
-dotenv.config();
 
 // CORS configuration - Add this BEFORE other middleware
 app.use(cors({
