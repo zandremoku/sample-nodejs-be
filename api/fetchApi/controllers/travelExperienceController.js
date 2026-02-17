@@ -147,6 +147,8 @@ const updateTravelExperience = async (req, res) =>{
         }
 
         await experience.update(updates);
+        await experience.save();
+        await experience.reload();
 
         res.status(200).json({
             data: experience,
