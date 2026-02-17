@@ -3,6 +3,7 @@ import cookieParser from 'cookie-parser';
 import sequelize from './helpers/dbConnection.js';
 import userRoute from './fetchApi/routes/userRoute.js';
 import recommendationRoute from "./fetchApi/routes/recommendationRoute.js";
+import travelExperienceRoute from "./fetchApi/routes/travelExperienceRoute.js";
 import cors from 'cors';
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(cookieParser());
 
 app.use(userRoute);
 app.use(recommendationRoute);
+app.use(travelExperienceRoute);
 
 // Only run migration once, not on every cold start
 let migrated = false;
