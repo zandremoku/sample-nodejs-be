@@ -21,7 +21,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(userRoute);
-app.use(recommendationRoute);
+// app.use(recommendationRoute);
 app.use(travelExperienceRoute);
 
 // Only run migration once, not on every cold start
