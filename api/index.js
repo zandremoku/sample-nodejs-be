@@ -28,11 +28,16 @@ let migrated = false;
 async function migrate(){
     if (migrated) return;
     try {
-        await sequelize.sync({ alter: true });
+        // In production, skip alter to avoid timeouts on cold start
+        // Run migrations manually before deployment if schema changes are needed
+        const shouldAlter = process.env.NODE_ENV !== 'production';
+        await sequelize.sync({ alter: shouldAlter });
         console.log('All models were synchronized successfully.');
         migrated = true;
     } catch (error) {
         console.error('Error synchronizing models:', error);
+        // Don't crash the app if migration fails - tables might already exist
+        migrated = true;
     }
 }
 

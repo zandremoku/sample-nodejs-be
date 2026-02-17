@@ -17,8 +17,8 @@ const sequelize = new Sequelize(`${process.env.DATABASE_URL}`, {
     // Serverless-friendly connection settings
     keepalives: 1,
     keepalives_idle: 30,
-    statement_timeout: 30000, // 30 seconds
-    query_timeout: 30000, // 30 seconds
+    statement_timeout: 120000, // 120 seconds for migrations
+    query_timeout: 120000, // 120 seconds for migrations
   },
   // Connection pool configuration for serverless
   pool: {
