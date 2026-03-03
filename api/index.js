@@ -48,7 +48,7 @@ app.get('/', (req, res) => {
     res.json({ message: 'Backend is running!' });
 });
 
-// Removed to be complaint with Vercel deploying - just kept for development target
+// Removed to be compliant with Vercel deploying - just kept for development target
 if (process.env.NODE_ENV !== 'production') {
     app.listen(port, () => {
       console.log(`Sample app listening at http://localhost:${port}`);

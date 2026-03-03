@@ -70,11 +70,11 @@ const createTravelExperience = async (req, res) =>{
         // Prepare the traveler profile
         const profile = {
             age: parseInt(age),
-            income,
+            income: parseInt(income),
             riskTolerance,
             fitnessLevel,
             interests: Array.isArray(interests) ? interests : [interests],
-            languages: Array.isArray(languages) ? languages : (languages ? [languages] : ['italiano']),
+            languages: Array.isArray(languages) ? languages : (languages ? [languages] : ['english']),
             tripDuration,
             travelGroup
         };

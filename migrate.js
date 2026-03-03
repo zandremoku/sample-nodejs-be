@@ -21,6 +21,22 @@ async function migrate() {
 		await sequelize.authenticate();
 		console.log('✅ Connection established successfully.\n');
 
+		// Handle enum to integer conversion for income column
+		console.log('🔧 Checking for schema fixes needed...');
+		try {
+			await sequelize.query(`
+				ALTER TABLE "travel_experience" 
+				ALTER COLUMN "income" DROP DEFAULT,
+				ALTER COLUMN "income" TYPE INTEGER USING (20000::integer),
+				ALTER COLUMN "income" SET NOT NULL,
+				ALTER COLUMN "income" SET DEFAULT 20000;
+			`);
+			console.log('✅ Fixed income column (enum → integer)\n');
+		} catch (enumError) {
+			// Column might already be integer or doesn't exist, continue
+			console.log('ℹ️  Income column conversion not needed or already done\n');
+		}
+
 		// Run sync with alter
 		console.log('🔨 Syncing models and applying schema changes...');
 		await sequelize.sync({ alter: true });

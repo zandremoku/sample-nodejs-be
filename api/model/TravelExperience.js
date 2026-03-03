@@ -23,37 +23,37 @@ const TravelExperience = sequelize.define(
             allowNull: false
         },
         income: {
-            type: DataTypes.ENUM('basso', 'medio', 'alto', 'altissimo'),
+            type: DataTypes.INTEGER,
             allowNull: false,
-            defaultValue: 'medio'
+            defaultValue: 20000
         },
         riskTolerance: {
-            type: DataTypes.ENUM('basso', 'medio', 'alto'),
+            type: DataTypes.ENUM('low', 'medium', 'high'),
             allowNull: false,
-            defaultValue: 'basso'
+            defaultValue: 'low'
         },
         fitnessLevel: {
-            type: DataTypes.ENUM('sedentario', 'moderato', 'attivo', 'atletico'),
+            type: DataTypes.ENUM('sedentary', 'moderately_active', 'vigorously_active', 'extremely_active'),
             allowNull: false,
-            defaultValue: 'moderato'
+            defaultValue: 'moderately_active'
         },
         interests: {
-            type: DataTypes.JSON,
+            type: DataTypes.JSON,//to handle string array saving
             allowNull: true,
             defaultValue: []
         },
         languages: {
             type: DataTypes.JSON,
             allowNull: true,
-            defaultValue: ['italiano']
+            defaultValue: ['english']
         },
         tripDuration: {
-            type: DataTypes.ENUM('weekend', 'settimana', 'due_settimane', 'mese_o_piu'),
+            type: DataTypes.ENUM('weekend', 'one_week', 'two_weeks', 'three_weeks_plus'),
             allowNull: false,
-            defaultValue: 'settimana'
+            defaultValue: 'one_week'
         },
         travelGroup: {
-            type: DataTypes.ENUM('solo', 'coppia', 'amici', 'famiglia_bambini', 'famiglia_adulti'),
+            type: DataTypes.ENUM('solo', 'couple', 'friends', 'family_children', 'family_adults_only'),
             allowNull: false,
             defaultValue: 'solo'
         },
