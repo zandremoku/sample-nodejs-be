@@ -28,12 +28,12 @@ const TravelExperience = sequelize.define(
             defaultValue: 20000
         },
         riskTolerance: {
-            type: DataTypes.ENUM('low', 'medium', 'high'),
+            type: DataTypes.STRING(50),
             allowNull: false,
             defaultValue: 'low'
         },
         fitnessLevel: {
-            type: DataTypes.ENUM('sedentary', 'moderately_active', 'vigorously_active', 'extremely_active'),
+            type: DataTypes.STRING(50),
             allowNull: false,
             defaultValue: 'moderately_active'
         },
@@ -48,12 +48,12 @@ const TravelExperience = sequelize.define(
             defaultValue: ['english']
         },
         tripDuration: {
-            type: DataTypes.ENUM('weekend', 'one_week', 'two_weeks', 'three_weeks_plus'),
+            type: DataTypes.STRING(50),
             allowNull: false,
             defaultValue: 'one_week'
         },
         travelGroup: {
-            type: DataTypes.ENUM('solo', 'couple', 'friends', 'family_children', 'family_adults_only'),
+            type: DataTypes.STRING(50),
             allowNull: false,
             defaultValue: 'solo'
         },

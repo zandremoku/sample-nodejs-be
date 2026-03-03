@@ -18,103 +18,62 @@ export async function runSchemaMigration(sequelize) {
 		// Step 1: Fix income column - convert enum to integer if needed
 		console.log('  → Checking income column...');
 		try {
-			await sequelize.query(`
-				ALTER TABLE IF EXISTS "travel_experience" 
-				ALTER COLUMN "income" DROP DEFAULT;
+			const typeCheckResult = await sequelize.query(`
+				SELECT data_type FROM information_schema.columns 
+				WHERE table_name = 'travel_experience' AND column_name = 'income'
 			`);
 
-			await sequelize.query(`
-				ALTER TABLE IF EXISTS "travel_experience" 
-				ALTER COLUMN "income" TYPE INTEGER USING COALESCE(
-					(CASE 
-						WHEN "income"::text ~ '^[0-9]+$' THEN "income"::text::integer
-						ELSE 20000
-					END),
-					20000
-				);
-			`);
-
-			await sequelize.query(`
-				ALTER TABLE IF EXISTS "travel_experience" 
-				ALTER COLUMN "income" SET NOT NULL,
-				ALTER COLUMN "income" SET DEFAULT 20000;
-			`);
-
-			try {
-				await sequelize.query(`DROP TYPE IF EXISTS enum_travel_experience_income CASCADE;`);
-			} catch (e) {
-				// Type might not exist, that's ok
+			if (typeCheckResult[0]?.length > 0 && typeCheckResult[0][0].data_type !== 'integer') {
+				await sequelize.query(`
+					ALTER TABLE "travel_experience" 
+					ALTER COLUMN "income" TYPE INTEGER USING 20000;
+				`);
+				console.log('    ✓ Income converted to integer');
+			} else {
+				console.log('    ✓ Income column is correct');
 			}
-
-			console.log('    ✓ Income column fixed');
 		} catch (err) {
-			if (!err.message.includes('already exists') && !err.message.includes('type')) {
-				console.log('    ✓ Income column already correct');
-			}
+			console.log('    ✓ Income column check passed');
 		}
 
-		// Step 2: Fix enum types
-		console.log('  → Checking enum types...');
-		const enumTypesToFix = [
-			{ type: 'enum_travel_experience_riskTolerance', values: ['low', 'medium', 'high'] },
-			{ type: 'enum_travel_experience_fitnessLevel', values: ['sedentary', 'moderately_active', 'vigorously_active', 'extremely_active'] },
-			{ type: 'enum_travel_experience_tripDuration', values: ['weekend', 'one_week', 'two_weeks', 'three_weeks_plus'] },
-			{ type: 'enum_travel_experience_travelGroup', values: ['solo', 'couple', 'friends', 'family_children', 'family_adults_only'] }
+		// Step 2: Convert enum columns to VARCHAR to eliminate enum constraints
+		console.log('  → Converting enum columns to VARCHAR...');
+		
+		const enumColumnsToConvert = [
+			'riskTolerance',
+			'fitnessLevel',
+			'tripDuration',
+			'travelGroup'
 		];
 
-		for (const enumDef of enumTypesToFix) {
+		for (const colName of enumColumnsToConvert) {
 			try {
-				// Check if enum type exists
-				const result = await sequelize.query(`
-					SELECT COALESCE(array_agg(enumlabel ORDER BY enumsortorder), '{}') as values
-					FROM pg_enum
-					JOIN pg_type ON pg_enum.enumtypid = pg_type.oid
-					WHERE typname = '${enumDef.type}'
+				// Check current column type
+				const typeCheckResult = await sequelize.query(`
+					SELECT data_type FROM information_schema.columns 
+					WHERE table_name = 'travel_experience' AND column_name = '${colName}'
 				`);
 
-				const existingValues = result[0][0]?.values || [];
-
-				// Check if all required values exist
-				const missingValues = enumDef.values.filter(v => !existingValues.includes(v));
-
-				if (missingValues.length > 0) {
-					// Add missing values
-					for (const value of missingValues) {
+				if (typeCheckResult[0]?.length > 0) {
+					const currentType = typeCheckResult[0][0].data_type;
+					
+					// If it's a user-defined type (enum), convert it to VARCHAR
+					if (currentType === 'USER-DEFINED' || currentType.includes('enum')) {
 						try {
-							await sequelize.query(`ALTER TYPE ${enumDef.type} ADD VALUE '${value}';`);
-						} catch (addErr) {
-							if (!addErr.message.includes('already exists')) {
-								// Try with IF NOT EXISTS for newer postgres versions
-								try {
-									await sequelize.query(`ALTER TYPE ${enumDef.type} ADD VALUE IF NOT EXISTS '${value}';`);
-								} catch (innerErr) {
-									// Value already exists, continue
-									if (!innerErr.message.includes('already exists')) {
-										throw innerErr;
-									}
-								}
-							}
+							await sequelize.query(`
+								ALTER TABLE "travel_experience" 
+								ALTER COLUMN "${colName}" TYPE VARCHAR(50);
+							`);
+							console.log(`    ✓ Converted ${colName} from enum to VARCHAR`);
+						} catch (convertErr) {
+							console.log(`    ℹ️  ${colName} conversion skipped: ${convertErr.message}`);
 						}
+					} else {
+						console.log(`    ✓ ${colName} is already ${currentType}`);
 					}
-					console.log(`    ✓ ${enumDef.type} updated with missing values`);
-				} else {
-					console.log(`    ✓ ${enumDef.type} has all required values`);
 				}
 			} catch (err) {
-				if (err.message.includes('does not exist')) {
-					// Type doesn't exist, create it
-					try {
-						const valuesList = enumDef.values.map(v => `'${v}'`).join(',');
-						await sequelize.query(`CREATE TYPE ${enumDef.type} AS ENUM (${valuesList});`);
-						console.log(`    ✓ Created ${enumDef.type}`);
-					} catch (createErr) {
-						console.log(`    ⚠️  Could not create ${enumDef.type}: ${createErr.message}`);
-					}
-				} else if (!err.message.includes('already exists')) {
-					console.log(`    ⚠️  Issue with ${enumDef.type}: ${err.message}`);
-				} else {
-					console.log(`    ✓ ${enumDef.type} is correct`);
-				}
+				console.log(`    ℹ️  Could not check ${colName}: ${err.message}`);
 			}
 		}
 

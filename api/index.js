@@ -20,6 +20,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Flag to track if app is ready
+let isAppReady = false;
+
+// Middleware to ensure migrations are complete before accepting requests
+app.use((req, res, next) => {
+    if (!isAppReady) {
+        return res.status(503).json({ error: 'Service initializing...' });
+    }
+    next();
+});
+
 app.use(userRoute);
 app.use(travelExperienceRoute);
 
@@ -38,13 +49,16 @@ async function migrate(){
         await sequelize.sync({ alter: shouldAlter });
         console.log('All models were synchronized successfully.');
         migrated = true;
+        isAppReady = true;
     } catch (error) {
         console.error('Error synchronizing models:', error);
         // Don't crash the app if migration fails - tables might already exist
         migrated = true;
+        isAppReady = true;
     }
 }
 
+// Start migration and wait for it
 migrate();
 
 // Example route to test JSON parsing
