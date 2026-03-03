@@ -74,24 +74,65 @@ async function migrate() {
 				console.log('✅ Fixed income column\n');
 			}
 			
-			// Step 5: Fix enum type issues for other columns
-			// These enums might be corrupted, so we'll recreate them
+			// Step 5: Ensure all enum types exist with correct values
+			// Add missing enum values to existing types
 			const enumTypesToFix = [
-				{ type: 'enum_travel_experience_riskTolerance', values: "'low','medium','high'" },
-				{ type: 'enum_travel_experience_fitnessLevel', values: "'sedentary','moderately_active','vigorously_active','extremely_active'" },
-				{ type: 'enum_travel_experience_tripDuration', values: "'weekend','one_week','two_weeks','three_weeks_plus'" },
-				{ type: 'enum_travel_experience_travelGroup', values: "'solo','couple','friends','family_children','family_adults_only'" }
+				{ type: 'enum_travel_experience_riskTolerance', values: ['low', 'medium', 'high'] },
+				{ type: 'enum_travel_experience_fitnessLevel', values: ['sedentary', 'moderately_active', 'vigorously_active', 'extremely_active'] },
+				{ type: 'enum_travel_experience_tripDuration', values: ['weekend', 'one_week', 'two_weeks', 'three_weeks_plus'] },
+				{ type: 'enum_travel_experience_travelGroup', values: ['solo', 'couple', 'friends', 'family_children', 'family_adults_only'] }
 			];
 			
 			for (const enumDef of enumTypesToFix) {
 				try {
-					// Drop and recreate enum types to ensure they have correct values
-					await sequelize.query(`DROP TYPE IF EXISTS ${enumDef.type} CASCADE;`);
-					await sequelize.query(`CREATE TYPE ${enumDef.type} AS ENUM (${enumDef.values});`);
-					console.log(`✅ Fixed enum type: ${enumDef.type}`);
+					// Check if enum type exists
+					const result = await sequelize.query(`
+						SELECT EXISTS (
+							SELECT 1 FROM pg_type WHERE typname = '${enumDef.type}'
+						);
+					`);
+					
+					const typeExists = result[0][0].exists;
+					
+					if (typeExists) {
+						// Type exists, add missing values
+						let addedCount = 0;
+						for (const value of enumDef.values) {
+							try {
+								await sequelize.query(`ALTER TYPE ${enumDef.type} ADD VALUE IF NOT EXISTS '${value}';`);
+								addedCount++;
+							} catch (addErr) {
+								// Value might already exist, check the error
+								if (addErr.message.includes('already exists')) {
+									// Value already exists, that's fine
+								} else if (addErr.message.includes('IF NOT EXISTS')) {
+									// PostgreSQL might not support IF NOT EXISTS for older versions
+									// Try without it
+									try {
+										await sequelize.query(`ALTER TYPE ${enumDef.type} ADD VALUE '${value}';`);
+										addedCount++;
+									} catch (innerErr) {
+										// Value probably exists, continue
+										if (innerErr.message.includes('already exists')) {
+											// That's expected
+										} else {
+											throw innerErr;
+										}
+									}
+								} else {
+									throw addErr;
+								}
+							}
+						}
+						console.log(`✅ Ensured all values exist in ${enumDef.type}`);
+					} else {
+						// Type doesn't exist, create it
+						const valuesList = enumDef.values.map(v => `'${v}'`).join(',');
+						await sequelize.query(`CREATE TYPE ${enumDef.type} AS ENUM (${valuesList});`);
+						console.log(`✅ Created enum type: ${enumDef.type}`);
+					}
 				} catch (err) {
-					// Type might already be correct, that's ok
-					console.log(`ℹ️  Enum type ${enumDef.type} check passed`);
+					console.log(`⚠️  Issue with enum type ${enumDef.type}: ${err.message}`);
 				}
 			}
 			console.log('');
