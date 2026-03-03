@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import sequelize from './helpers/dbConnection.js';
+import { runSchemaMigration } from './helpers/schemaMigration.js';
 import userRoute from './fetchApi/routes/userRoute.js';
 import travelExperienceRoute from "./fetchApi/routes/travelExperienceRoute.js";
 import cors from 'cors';
@@ -28,8 +29,11 @@ let migrated = false;
 async function migrate(){
     if (migrated) return;
     try {
-        // In production, skip alter to avoid timeouts on cold start
-        // Run migrations manually before deployment if schema changes are needed
+        // Run schema migration first (handles enum fixes and schema corrections)
+        console.log('🔄 Starting application startup...');
+        await runSchemaMigration(sequelize);
+        
+        // Then sync models
         const shouldAlter = process.env.NODE_ENV !== 'production';
         await sequelize.sync({ alter: shouldAlter });
         console.log('All models were synchronized successfully.');
