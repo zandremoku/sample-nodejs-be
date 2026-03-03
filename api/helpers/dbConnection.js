@@ -5,12 +5,17 @@ import pg from 'pg';
 
 dotenv.config();
 
+// Detect if this is a remote database (requires SSL) based on URL
+const dbUrl = process.env.DATABASE_URL || '';
+const isRemoteDb = dbUrl.includes('neon') || dbUrl.includes('aws') || dbUrl.includes('cloud');
+const isProduction = process.env.NODE_ENV === 'production' || isRemoteDb;
+
 // Optimized for Vercel serverless environment
 const sequelize = new Sequelize(`${process.env.DATABASE_URL}`, {
   dialect: 'postgres',
   dialectModule: pg,
   dialectOptions: {
-    ssl: process.env.NODE_ENV === 'production' ? {
+    ssl: isProduction ? {
       require: true,
       rejectUnauthorized: false // Needed for Neon
     } : false,

@@ -5,10 +5,30 @@
  * Usage: npm run migrate:prod
  */
 
-import sequelize from './api/helpers/dbConnection.js';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+// Determine which env file to load
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const isProduction = process.argv.includes('--production');
+
+let envFile;
+if (isProduction) {
+	envFile = path.join(__dirname, '.env.production');
+	console.log(`📂 Loading production environment from: ${envFile}\n`);
+	// Load production env only
+	dotenv.config({ path: envFile, override: true });
+	// Explicitly set NODE_ENV for this process
+	process.env.NODE_ENV = 'production';
+} else {
+	envFile = path.join(__dirname, '.env');
+	console.log(`📂 Loading development environment from: ${envFile}\n`);
+	dotenv.config({ path: envFile, override: true });
+}
+
+// NOW import sequelize after env is loaded
+const { default: sequelize } = await import('./api/helpers/dbConnection.js');
 
 async function migrate() {
 	console.log('🔄 Starting database migration...');
