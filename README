@@ -1,0 +1,4 @@
+Backend NodeJS/Express with Sequelize middleware using Postgres db, deployed on Vercel.
+
+Backend lives here: https://sample-nodejs-be.vercel.app/
+Frontend lives here: https://sample-nextjs-fe.vercel.app/

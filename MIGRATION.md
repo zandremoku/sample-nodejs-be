@@ -30,7 +30,7 @@ cd /Users/andreazorzi/tests/sample-nodejs-be
 
 ### Step 2: Run Local Migration
 ```bash
-npm run migrate:prod
+npm run migrate
 ```
 
 **Expected Output:**
@@ -63,6 +63,11 @@ git push
 # Vercel will auto-deploy
 ```
 
+### 4. Run migration manually for production db (we removed automatic migration on cold start because it took 2 minutes to run migrations which led to service unavailable issues for users)
+```bash
+npm run migrate:prod
+```
+
 ## Example: Adding a New Field
 
 ### 1. Update Model
@@ -76,14 +81,19 @@ const newField = {
 };
 ```
 
-### 2. Run Migration
+### 2. Run Migration locally
 ```bash
-npm run migrate:prod
+npm run migrate
 ```
 
 ### 3. Deploy
 ```bash
 git push
+```
+
+### 4. Run migration manually for production db (remote url)
+```bash
+npm run migrate:prod
 ```
 
 ## Troubleshooting
@@ -113,14 +123,12 @@ git push
 
 ## Advanced: Vercel Deployment
 
-### Option 1: Manual Pre-Deployment (Recommended)
+### Option 1: Manual migration (Recommended)
 ```bash
-# Before git push
 npm run migrate:prod
-git push
 ```
 
-### Option 2: Automated (Uses buildCommand)
+### Option 2: Automated (Uses buildCommand) TESTED, BUT DOES NOT WORK.
 Add to `vercel.json`:
 ```json
 {

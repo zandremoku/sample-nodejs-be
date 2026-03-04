@@ -1,7 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
 import sequelize from './helpers/dbConnection.js';
-import { runSchemaMigration } from './helpers/schemaMigration.js';
 import userRoute from './fetchApi/routes/userRoute.js';
 import travelExperienceRoute from "./fetchApi/routes/travelExperienceRoute.js";
 import cors from 'cors';
@@ -20,46 +19,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Flag to track if app is ready
-let isAppReady = false;
-
-// Middleware to ensure migrations are complete before accepting requests
-app.use((req, res, next) => {
-    if (!isAppReady) {
-        return res.status(503).json({ error: 'Service initializing...' });
-    }
-    next();
-});
-
 app.use(userRoute);
 app.use(travelExperienceRoute);
 
-// Only run migration once, not on every cold start
-let migrated = false;
-
-async function migrate(){
-    if (migrated) return;
+// Auto-sync models on startup (quick, no manual migration needed)
+(async () => {
     try {
-        // Run schema migration first (handles enum fixes and schema corrections)
-        console.log('🔄 Starting application startup...');
-        await runSchemaMigration(sequelize);
-        
-        // Then sync models
         const shouldAlter = process.env.NODE_ENV !== 'production';
         await sequelize.sync({ alter: shouldAlter });
-        console.log('All models were synchronized successfully.');
-        migrated = true;
-        isAppReady = true;
+        console.log('✅ Models synchronized successfully.');
     } catch (error) {
-        console.error('Error synchronizing models:', error);
-        // Don't crash the app if migration fails - tables might already exist
-        migrated = true;
-        isAppReady = true;
+        console.error('⚠️  Model sync warning:', error.message);
     }
-}
-
-// Start migration and wait for it
-migrate();
+})();
 
 // Example route to test JSON parsing
 app.get('/', (req, res) => {
